@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>API Horóscopo</title>
+  <style>
+    body { 
+        font-family: Arial, sans-serif; 
+        max-width: 600px; 
+        margin: 30px auto; 
+        padding: 10px; 
+    }
+    input, button { 
+        padding: 8px; 
+        margin: 5px 0; 
+        width: 100%; 
+        box-sizing: border-box; 
+    }
+    .item { 
+        border: 1px solid #ccc; 
+        padding: 10px; 
+        margin-top: 10px; 
+        border-radius: 5px; 
+    }
+  </style>
+</head>
+<body>
+
+  <h2>1. Cadastrar Novo Signo</h2>
+  <form id="formCadastro">
+    <input type="text" id="signo" placeholder="Signo" required>
+    <input type="text" id="periodo" placeholder="Período (ex: 30/11 a 17/12)" required>
+    <input type="text" id="caracteristicas" placeholder="Características" required>
+    <button type="submit">Salvar</button>
+  </form>
+
+  <hr>
+
+  <h2>2. Pesquisar Signo</h2>
+  <input type="number" id="buscaId" placeholder="Digite o ID (ex: 1) ou deixe vazio para ver todos">
+  <button onclick="pesquisar()">Pesquisar</button>
+
+  <div id="resultado"></div>
+
+  <script>
+    const URL = 'http://localhost:3000/signos';
+
+    // Carregar todos ao abrir a página
+    window.onload = pesquisar;
+
+    // GET
+    async function pesquisar() {
+      const id = document.getElementById('buscaId').value;
+      const div = document.getElementById('resultado');
+
+      // GET por id /signos/:id. Se for vazio, busca /signos
+      const resposta = await fetch(id ? `${URL}/${id}` : URL);
+
+      if (!resposta.ok) {
+        div.innerHTML = '<p>Signo não encontrado.</p>';
+        return;
+      }
+
+      const dados = await resposta.json();
+      // Se veio só 1 objeto na busca por ID, coloca dentro de um array para usar o mesmo loop
+      const lista = Array.isArray(dados) ? dados : [dados];
+
+      div.innerHTML = lista.map(s => `
+        <div class="item">
+          <strong>#${s.id} - ${s.signo}</strong> (${s.periodo})<br>
+          ${s.caracteristicas}
+        </div>
+      `).join('');
+    }
+
+    // POST
+    document.getElementById('formCadastro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      await fetch(URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signo: document.getElementById('signo').value,
+          periodo: document.getElementById('periodo').value,
+          caracteristicas: document.getElementById('caracteristicas').value
+        })
+      });
+
+      e.target.reset();
+      document.getElementById('buscaId').value = '';
+      pesquisar(); // Atualizar lista na tela
+    });
+  </script>
+
+</body>
+</html>
